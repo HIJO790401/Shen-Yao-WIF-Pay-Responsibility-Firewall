@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shen-Yao WIF-Pay Responsibility Firewall Demo</title>
+  <meta name="description" content="Shen-Yao WIF-Pay Responsibility Firewall Demo｜A front-end demo for replayable payment responsibility chains." />
+  <style>
+    :root {
+      --bg: #f7fbff;
+      --card: #ffffff;
+      --ink: #0b1f33;
+      --muted: #5b6b7d;
+      --line: #d7e3f0;
+      --blue: #2563eb;
+      --cyan: #38bdf8;
+      --green: #16a34a;
+      --green-soft: #ecfdf5;
+      --orange: #f59e0b;
+      --red: #ef4444;
+      --purple: #a855f7;
+      --shadow: 0 18px 48px rgba(15, 40, 80, 0.10);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Noto Sans", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 5%, rgba(56, 189, 248, 0.18), transparent 28%),
+        radial-gradient(circle at 92% 8%, rgba(22, 163, 74, 0.16), transparent 30%),
+        linear-gradient(180deg, #ffffff 0%, var(--bg) 45%, #eef9f7 100%);
+      line-height: 1.65;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .wrap {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(14px);
+      background: rgba(247, 251, 255, 0.82);
+      border-bottom: 1px solid rgba(215, 227, 240, 0.8);
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0;
+      gap: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--blue), var(--cyan), var(--green));
+      display: grid;
+      place-items: center;
+      color: white;
+      box-shadow: 0 10px 28px rgba(37, 99, 235, 0.25);
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 0;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 11px 16px;
+      font-weight: 800;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--blue), #0ea5e9);
+      color: white;
+      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+    }
+
+    .btn-soft {
+      background: white;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .hero {
+      padding: 58px 0 28px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 28px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: var(--green-soft);
+      border: 1px solid rgba(22, 163, 74, 0.18);
+      color: #08763b;
+      font-weight: 900;
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      font-size: clamp(34px, 6vw, 68px);
+      line-height: 1.02;
+      margin: 0 0 18px;
+      letter-spacing: -0.055em;
+    }
+
+    .subtitle {
+      font-size: clamp(17px, 2.3vw, 22px);
+      color: var(--muted);
+      max-width: 760px;
+      margin: 0 0 22px;
+    }
+
+    .hero-card {
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chain-visual {
+      display: grid;
+      gap: 12px;
+      position: relative;
+    }
+
+    .node-pill {
+      background: white;
+      border: 1px solid var(--line);
+      border-left: 7px solid var(--blue);
+      border-radius: 18px;
+      padding: 12px 14px;
+      box-shadow: 0 12px 24px rgba(15, 40, 80, 0.06);
+    }
+
+    .node-pill:nth-child(2) { border-left-color: var(--cyan); }
+    .node-pill:nth-child(3) { border-left-color: var(--green); }
+    .node-pill:nth-child(4) { border-left-color: var(--orange); }
+    .node-pill:nth-child(5) { border-left-color: var(--purple); }
+
+    .node-title { font-weight: 950; }
+    .node-sub { color: var(--muted); font-size: 13px; }
+
+    section { padding: 28px 0; }
+
+    .section-title {
+      font-size: clamp(26px, 4vw, 40px);
+      line-height: 1.1;
+      margin: 0 0 10px;
+      letter-spacing: -0.035em;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      margin: 0 0 20px;
+      font-size: 16px;
+    }
+
+    .safety {
+      background: rgba(236, 253, 245, 0.9);
+      border: 1px solid rgba(22, 163, 74, 0.22);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: 0 12px 26px rgba(22, 163, 74, 0.08);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .scenario {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      cursor: pointer;
+      text-align: left;
+      box-shadow: 0 10px 28px rgba(15, 40, 80, 0.06);
+      transition: 0.2s ease;
+      min-height: 210px;
+    }
+
+    .scenario:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .scenario.active { outline: 3px solid rgba(37, 99, 235, 0.2); border-color: var(--blue); }
+
+    .status-badge {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 950;
+      margin-bottom: 12px;
+      color: white;
+    }
+
+    .NORMAL, .CLOSED, .CLEAR, .TRACEABLE { background: var(--green); }
+    .WATCH, .PARTIAL, .REVIEW_REQUIRED { background: var(--orange); }
+    .DISPUTE, .PRIMARY_REVIEW_REQUIRED, .OPEN_RISK { background: #fb923c; }
+    .ESCALATE, .LIABILITY_LOCK, .ESCALATION_FAILURE, .BROKEN { background: var(--red); }
+    .JOINT_REVIEW, .JOINT_REVIEW_REQUIRED { background: var(--purple); }
+
+    .panel {
+      background: rgba(255,255,255,0.92);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .kv {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .kv-row {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(215, 227, 240, 0.75);
+    }
+
+    .kv-row:last-child { border-bottom: 0; }
+    .k { color: var(--muted); font-size: 13px; font-weight: 800; }
+    .v { font-weight: 800; overflow-wrap: anywhere; }
+
+    .nodes {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .responsibility-node {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      background: white;
+      min-height: 142px;
+    }
+
+    .node-icon { font-size: 26px; margin-bottom: 8px; }
+    .node-name { font-weight: 950; font-size: 16px; }
+    .node-state { margin-top: 10px; display: inline-flex; border-radius: 999px; padding: 6px 9px; color: white; font-size: 11px; font-weight: 950; }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .score-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: white;
+      padding: 14px;
+    }
+
+    .score-num {
+      font-size: 32px;
+      font-weight: 950;
+      letter-spacing: -0.04em;
+      margin: 6px 0;
+    }
+
+    .bar {
+      height: 10px;
+      background: #e5edf6;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .bar > span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--blue), var(--green));
+      border-radius: 999px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .hash-step {
+      display: grid;
+      grid-template-columns: 58px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+    }
+
+    .h-label {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      color: white;
+      font-weight: 950;
+    }
+
+    .hash-short {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .report {
+      white-space: pre-line;
+      color: #13293f;
+    }
+
+    .jsonbox {
+      background: #0b1f33;
+      color: #dff7ff;
+      border-radius: 18px;
+      padding: 14px;
+      overflow: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      max-height: 360px;
+    }
+
+    footer {
+      padding: 36px 0 50px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .sig {
+      font-weight: 950;
+      color: var(--ink);
+      margin-top: 12px;
+    }
+
+    @media (max-width: 860px) {
+      .hero, .two-col { grid-template-columns: 1fr; }
+      .grid, .nodes, .score-grid { grid-template-columns: 1fr; }
+      .nav { align-items: flex-start; }
+      .nav-actions { width: 100%; justify-content: flex-start; }
+      .kv-row { grid-template-columns: 1fr; gap: 3px; }
+      .hash-step { grid-template-columns: 44px 1fr; }
+      .hash-step .btn { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap nav">
+      <div class="brand">
+        <div class="brand-mark">W</div>
+        <div>
+          <div>WIF-Pay</div>
+          <div style="font-size:12px;color:var(--muted);font-weight:700;">Responsibility Firewall Demo</div>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <a class="btn btn-soft" href="#demo">查看 Demo / View Demo</a>
+        <a class="btn btn-primary" href="https://hijo790401.github.io/shen-yao-portal/" target="_blank" rel="noopener">官方網站 / Official Website</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap hero">
+      <div>
+        <div class="eyebrow">🩸 Ω∞8888｜Financial Responsibility Chain</div>
+        <h1>沈耀 WIF-Pay 金融責任鏈防火牆</h1>
+        <p class="subtitle">
+          Shen-Yao WIF-Pay Responsibility Firewall<br>
+          每一筆付款，都應該有一條可追溯、可回放、可定責的責任鏈。<br>
+          Every payment should carry a traceable, replayable, and accountable responsibility chain.
+        </p>
+        <div class="nav-actions">
+          <a class="btn btn-primary" href="#demo">開始示範 / Start Demo</a>
+          <a class="btn btn-soft" href="#contact">完整 API / PoC 合作</a>
+        </div>
+      </div>
+
+      <div class="hero-card">
+        <div class="chain-visual">
+          <div class="node-pill"><div class="node-title">👤 User</div><div class="node-sub">付款主體 / Payment Subject</div></div>
+          <div class="node-pill"><div class="node-title">🏦 Bank</div><div class="node-sub">授權責任位 / Authorization Node</div></div>
+          <div class="node-pill"><div class="node-title">🧩 Platform</div><div class="node-sub">路由責任位 / Routing Node</div></div>
+          <div class="node-pill"><div class="node-title">🏢 Provider</div><div class="node-sub">服務開通責任位 / Service Node</div></div>
+          <div class="node-pill"><div class="node-title">↺ Replay</div><div class="node-sub">Hash Chain + Responsibility Report</div></div>
+        </div>
+      </div>
+    </div>
+
+    <section>
+      <div class="wrap">
+        <div class="safety">
+          <strong>安全聲明 / Safety Notice</strong><br>
+          本 Demo 為純前端示範，不接入真實付款、不蒐集卡號、不保存 CVV、不要求密碼、不連接銀行 API。只示範付款事件如何被轉換為可回放的責任鏈。<br>
+          This is a front-end demo only. It does not process real payments, collect card numbers, store CVV, request passwords, or connect to banking APIs. It demonstrates how payment events can become replayable responsibility chains.
+        </div>
+      </div>
+    </section>
+
+    <section id="demo">
+      <div class="wrap">
+        <h2 class="section-title">Demo Scenarios｜示範情境</h2>
+        <p class="section-sub">選擇固定範本，不讓使用者亂填。每個範本會生成交易身份卡、責任節點、分數、Hash Replay 與雙語報告。</p>
+
+        <div class="grid" id="scenarioGrid"></div>
+
+        <div class="two-col" style="margin-top:18px;">
+          <div class="panel">
+            <h3>Payment Event Card｜付款事件身份卡</h3>
+            <div class="kv" id="eventCard"></div>
+          </div>
+
+          <div class="panel">
+            <h3>Internal Scores｜內部計算分數</h3>
+            <div class="score-grid" id="scorePanel"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Responsibility Nodes｜責任節點地圖</h3>
+          <div class="nodes" id="nodeMap"></div>
+        </div>
+
+        <div class="two-col">
+          <div class="panel">
+            <h3>Hash Replay Timeline｜哈希回放鏈</h3>
+            <div class="timeline" id="hashTimeline"></div>
+          </div>
+
+          <div class="panel">
+            <h3>Replay Report｜雙語回放報告</h3>
+            <div class="report" id="replayReport"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Audit JSON｜審計 JSON</h3>
+          <button class="btn btn-soft" id="copyJsonBtn" type="button">複製 JSON / Copy JSON</button>
+          <pre class="jsonbox" id="jsonBox"></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact">
+      <div class="wrap">
+        <div class="panel">
+          <h2 class="section-title">About WIF-Pay｜關於 WIF-Pay</h2>
+          <p>
+            WIF-Pay is not a payment processor. It is a responsibility replay layer for payment events.<br>
+            WIF-Pay 不是支付處理器，而是付款事件的責任回放層。
+          </p>
+          <p>
+            It does not replace banks, payment platforms, or service providers. It converts payment events into traceable, auditable, and replayable responsibility chains.<br>
+            它不取代銀行、不取代平台、不取代服務商。它把付款事件轉換成可追溯、可審計、可回放的責任鏈。
+          </p>
+          <div class="nav-actions">
+            <a class="btn btn-primary" href="https://hijo790401.github.io/shen-yao-portal/" target="_blank" rel="noopener">前往官方網站 / Visit Official Website</a>
+            <a class="btn btn-soft" href="https://hijo790401.github.io/shen-yao-portal/" target="_blank" rel="noopener">完整 API / PoC 合作請由官網聯絡</a>
+          </div>
+          <p class="sig">
+            許文耀／沈耀888π｜Wen-Yao Hsu / Shen Yao 888π<br>
+            Founder of Semantic Firewall｜Taiwan, Taichung
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Ω∞8888｜WIF-Pay Responsibility Firewall Demo<br>
+    No real payment. No card data. No CVV. No password. Hash Replay Simulation Only.
+  </footer>
+
+  <script>
+    const scenarios = [
+      {
+        id: "normal",
+        titleZH: "正常訂閱",
+        titleEN: "Normal Subscription",
+        badge: "CLOSED",
+        descZH: "銀行授權、付款平台路由、服務商開通，責任鏈完整。",
+        descEN: "Bank authorization, platform routing, and provider activation are complete.",
+        event: {
+          wif_pay_id: "WIFPAY-20260428-ESUN-APPLE-CLAUDE-0001",
+          order_id: "APL.2026-0428-0001",
+          timestamp: "2026-04-28T21:30:00.123+08:00",
+          user_bank: "E.SUN Bank",
+          payment_platform: "Apple Pay",
+          service_provider: "Anthropic / Claude",
+          function_type: "Pro subscription",
+          payment_action: "Authorization → Capture → Subscription Activation",
+          audit_anchor: "WIFPAY-ANCHOR-VALID",
+          blood_bind_hash: "BLOOD-HASH-DEMO",
+          previous_hash: "GENESIS"
+        },
+        wif_vector: { who_clear:1, what_clear:1, when_clear:1, where_clear:1, why_clear:.9, how_clear:.95, responsibility_clear:.95, replay_available:1, anchor_valid:1 },
+        scbkr: { S:.95, C:.95, B:.95, K:.92, R:.96 },
+        risk_vector: { unauthorized_payment:0, unknown_recipient:0, bank_auth_gap:.05, platform_route_gap:.05, provider_account_gap:.05, support_no_human:0, post_report_payment_notice:0, replay_missing:0, liability_shirking:0 },
+        steps: ["Transaction Start", "Bank Authorization", "Platform Route", "Provider Activation", "Receipt Notice", "Final Replay"],
+        reportZH: "本付款事件目前責任鏈完整。使用者銀行、付款平台與服務商節點皆可追溯，未偵測重大異常。此交易可歸檔為 CLOSED 狀態。",
+        reportEN: "This payment event has a complete responsibility chain. The user bank, payment platform, and service provider nodes are traceable. No major anomaly was detected. The event can be archived as CLOSED."
+      },
+      {
+        id: "gift",
+        titleZH: "禮物訂閱疑似盜刷",
+        titleEN: "Suspicious Gift Subscription",
+        badge: "ESCALATE",
+        descZH: "付款完成後，禮物訂閱送往陌生帳號；使用者回報後仍收到付款通知，客服未真人確認。",
+        descEN: "A gift subscription was activated for an unknown recipient. After user reporting, payment notices continued without human confirmation.",
+        event: {
+          wif_pay_id: "WIFPAY-20260428-ESUN-GPLAY-CLAUDE-0002",
+          order_id: "GPA.1234-5678-9012-34567",
+          timestamp: "2026-04-28T21:30:00.123+08:00",
+          user_bank: "E.SUN Bank",
+          payment_platform: "Google Play",
+          service_provider: "Anthropic / Claude",
+          function_type: "Gift subscription",
+          payment_action: "Authorization → Capture → Gift Subscription Activation → User Report",
+          audit_anchor: "WIFPAY-ANCHOR-VALID",
+          blood_bind_hash: "BLOOD-HASH-DEMO",
+          previous_hash: "GENESIS"
+        },
+        wif_vector: { who_clear:.7, what_clear:.9, when_clear:1, where_clear:.8, why_clear:.3, how_clear:.7, responsibility_clear:.4, replay_available:.7, anchor_valid:1 },
+        scbkr: { S:.6, C:.7, B:.5, K:.7, R:.4 },
+        risk_vector: { unauthorized_payment:.9, unknown_recipient:.9, bank_auth_gap:.6, platform_route_gap:.5, provider_account_gap:.8, support_no_human:.9, post_report_payment_notice:.8, replay_missing:.3, liability_shirking:.7 },
+        steps: ["Transaction Start", "Bank Authorization", "Platform Route", "Gift Activation", "User Report", "Auto Support Reply", "Payment Notice Continued", "Final Replay"],
+        reportZH: "本事件顯示付款行為進入高風險責任審計狀態。交易經由使用者銀行、付款平台與服務商完成授權與禮物訂閱開通，但接收帳號與使用者主體不一致。使用者回報後，客服節點未出現真人確認，且系統仍持續發送付款通知。因此 PROVIDER_NODE 與 SUPPORT_NODE 需進入責任審計，BANK_NODE 與 PLATFORM_NODE 需保留授權與路由紀錄以供回放。",
+        reportEN: "This payment event entered a high-risk responsibility audit state. The transaction passed through the user bank, payment platform, and service provider, resulting in gift subscription activation. However, the recipient account does not match the user subject. After user reporting, no human confirmation was recorded, and payment notices continued. Therefore, PROVIDER_NODE and SUPPORT_NODE require responsibility review, while BANK_NODE and PLATFORM_NODE must preserve authorization and routing records for replay."
+      },
+      {
+        id: "shirking",
+        titleZH: "三方互相推責",
+        titleEN: "Liability Shirking Case",
+        badge: "JOINT_REVIEW",
+        descZH: "銀行、付款平台、服務商、客服彼此推諉，責任鏈未閉環，需聯合審計。",
+        descEN: "Bank, platform, provider, and support shift responsibility to each other. Joint review is required.",
+        event: {
+          wif_pay_id: "WIFPAY-20260428-BANK-PLATFORM-PROVIDER-0003",
+          order_id: "ORD-JOINT-REVIEW-0003",
+          timestamp: "2026-04-28T22:00:00.888+08:00",
+          user_bank: "User Bank",
+          payment_platform: "Payment Platform",
+          service_provider: "Service Provider",
+          function_type: "Subscription / Digital Service",
+          payment_action: "Dispute → Platform Referral → Provider Referral → Auto Support Loop",
+          audit_anchor: "WIFPAY-ANCHOR-VALID",
+          blood_bind_hash: "BLOOD-HASH-DEMO",
+          previous_hash: "GENESIS"
+        },
+        wif_vector: { who_clear:.55, what_clear:.75, when_clear:.85, where_clear:.55, why_clear:.25, how_clear:.45, responsibility_clear:.2, replay_available:.45, anchor_valid:1 },
+        scbkr: { S:.45, C:.52, B:.35, K:.48, R:.15 },
+        risk_vector: { unauthorized_payment:.65, unknown_recipient:.55, bank_auth_gap:.65, platform_route_gap:.75, provider_account_gap:.65, support_no_human:.9, post_report_payment_notice:.7, replay_missing:.65, liability_shirking:.95 },
+        steps: ["Transaction Start", "Bank Says Platform", "Platform Says Provider", "Provider Says Support", "Support Auto Reply", "Responsibility Gap", "Joint Review Required"],
+        reportZH: "本事件存在多方責任推諉。銀行、付款平台、服務商與客服節點皆未完成責任閉環，且使用者無法得到明確承接節點。此情境應進入 JOINT_REVIEW，由各責任節點同步提交授權、路由、開通、客服與爭議處理紀錄。",
+        reportEN: "This event shows multi-party liability shirking. The bank, payment platform, service provider, and support nodes did not close the responsibility chain, and the user received no clear accountable node. This scenario should enter JOINT_REVIEW, requiring all nodes to submit authorization, routing, activation, support, and dispute records."
+      }
+    ];
+
+    let currentResult = null;
+
+    function avg(arr) {
+      return arr.reduce((a, b) => a + b, 0) / arr.length;
+    }
+
+    function round3(n) {
+      return Math.round(n * 1000) / 1000;
+    }
+
+    function stableStringify(value) {
+      if (value === null || typeof value !== "object") return JSON.stringify(value);
+      if (Array.isArray(value)) return "[" + value.map(stableStringify).join(",") + "]";
+      const keys = Object.keys(value).sort();
+      return "{" + keys.map(key => JSON.stringify(key) + ":" + stableStringify(value[key])).join(",") + "}";
+    }
+
+    async function sha256(text) {
+      if (window.crypto && crypto.subtle) {
+        const data = new TextEncoder().encode(text);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+        return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+      }
+      let h = 2166136261;
+      for (let i = 0; i < text.length; i++) {
+        h ^= text.charCodeAt(i);
+        h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+      }
+      return "fallback-" + (h >>> 0).toString(16).padStart(8, "0");
+    }
+
+    function computeWIF(v) {
+      const score = avg([v.who_clear, v.what_clear, v.when_clear, v.where_clear, v.why_clear, v.how_clear, v.responsibility_clear, v.replay_available, v.anchor_valid]);
+      let state = "BROKEN";
+      if (score >= 0.85) state = "TRACEABLE";
+      else if (score >= 0.60) state = "PARTIAL";
+      if (v.anchor_valid === 0) state = "BROKEN";
+      return { score: round3(score), state };
+    }
+
+    function computeSCBKR(s) {
+      const score = 0.23*s.S + 0.19*s.C + 0.20*s.B + 0.17*s.K + 0.21*s.R;
+      let state = "OPEN_RISK";
+      if (score >= 0.85) state = "CLOSED";
+      else if (score >= 0.60) state = "PARTIAL";
+      return { score: round3(score), state };
+    }
+
+    function computeRisk(r) {
+      const score =
+        0.17*r.unauthorized_payment +
+        0.14*r.unknown_recipient +
+        0.12*r.bank_auth_gap +
+        0.12*r.platform_route_gap +
+        0.14*r.provider_account_gap +
+        0.11*r.support_no_human +
+        0.10*r.post_report_payment_notice +
+        0.07*r.replay_missing +
+        0.03*r.liability_shirking;
+
+      let state = "NORMAL";
+      if (score >= 0.80) state = "LIABILITY_LOCK";
+      else if (score >= 0.65) state = "ESCALATE";
+      else if (score >= 0.45) state = "DISPUTE";
+      else if (score >= 0.25) state = "WATCH";
+      if (r.liability_shirking >= 0.80) state = "JOINT_REVIEW";
+      return { score: round3(score), state };
+    }
+
+    function computeLiability(r, riskState) {
+      const nodes = { bank:"CLEAR", platform:"CLEAR", provider:"CLEAR", support:"CLEAR" };
+
+      if (r.unauthorized_payment >= 0.7 && r.bank_auth_gap >= 0.5) nodes.bank = "PRIMARY_REVIEW_REQUIRED";
+      if (r.platform_route_gap >= 0.7) nodes.platform = "PRIMARY_REVIEW_REQUIRED";
+      else if (r.platform_route_gap >= 0.5) nodes.platform = "REVIEW_REQUIRED";
+      if (r.unknown_recipient >= 0.7 && r.provider_account_gap >= 0.5) nodes.provider = "PRIMARY_REVIEW_REQUIRED";
+
+      if (r.support_no_human >= 0.8 && ["DISPUTE","ESCALATE","LIABILITY_LOCK","JOINT_REVIEW"].includes(riskState)) {
+        nodes.support = "ESCALATION_FAILURE";
+      }
+
+      if (r.post_report_payment_notice >= 0.7) nodes.provider = "PRIMARY_REVIEW_REQUIRED";
+
+      if (r.liability_shirking >= 0.8) {
+        nodes.bank = "JOINT_REVIEW_REQUIRED";
+        nodes.platform = "JOINT_REVIEW_REQUIRED";
+        nodes.provider = "JOINT_REVIEW_REQUIRED";
+      }
+
+      return nodes;
+    }
+
+    async function buildHashSteps(scenario, riskState) {
+      const hashes = [];
+      let previous = scenario.event.previous_hash || "GENESIS";
+
+      for (let i = 0; i < scenario.steps.length; i++) {
+        const eventCore = {
+          wif_pay_id: scenario.event.wif_pay_id,
+          order_id: scenario.event.order_id,
+          timestamp: scenario.event.timestamp,
+          step: scenario.steps[i],
+          step_index: i,
+          risk_state: riskState,
+          audit_anchor: scenario.event.audit_anchor,
+          previous_hash: previous,
+          pii_redacted: true
+        };
+
+        const hash = await sha256(stableStringify(eventCore) + "|" + previous + "|" + scenario.event.wif_pay_id + "|" + scenario.event.audit_anchor);
+        hashes.push({ label: "H" + i, step: scenario.steps[i], hash });
+        previous = hash;
+      }
+
+      return hashes;
+    }
+
+    async function runScenario(id) {
+      const scenario = scenarios.find(s => s.id === id) || scenarios[0];
+      document.querySelectorAll(".scenario").forEach(el => el.classList.toggle("active", el.dataset.id === id));
+
+      const wif = computeWIF(scenario.wif_vector);
+      const scbkr = computeSCBKR(scenario.scbkr);
+      const risk = computeRisk(scenario.risk_vector);
+      const liability = computeLiability(scenario.risk_vector, risk.state);
+      const hashSteps = await buildHashSteps(scenario, risk.state);
+      const masterHash = await sha256(scenario.event.wif_pay_id + "|" + scenario.event.order_id + "|" + hashSteps.map(h => h.hash).join("|"));
+
+      currentResult = {
+        system: "Shen-Yao WIF-Pay Responsibility Firewall",
+        version: "v1.1-FRONTEND-DEMO",
+        ...scenario.event,
+        risk_state: risk.state,
+        scores: { wif_score: wif.score, scbkr_score: scbkr.score, risk_score: risk.score },
+        states: { wif_state: wif.state, responsibility_state: scbkr.state },
+        liability_nodes: liability,
+        hash_chain: { steps: hashSteps, master_hash: masterHash },
+        replay_summary_zh: scenario.reportZH,
+        replay_summary_en: scenario.reportEN,
+        privacy_guard: { no_full_card_number:true, no_cvv:true, no_password:true, pii_redacted:true }
+      };
+
+      renderEventCard(currentResult);
+      renderScores(currentResult);
+      renderNodes(currentResult);
+      renderTimeline(currentResult);
+      renderReport(currentResult);
+      document.getElementById("jsonBox").textContent = JSON.stringify(currentResult, null, 2);
+    }
+
+    function renderScenarios() {
+      const grid = document.getElementById("scenarioGrid");
+      grid.innerHTML = scenarios.map(s => `
+        <button class="scenario" data-id="${s.id}" type="button" onclick="runScenario('${s.id}')">
+          <span class="status-badge ${s.badge}">${s.badge}</span>
+          <h3>${s.titleZH}<br><span style="color:var(--muted);font-size:15px;">${s.titleEN}</span></h3>
+          <p>${s.descZH}</p>
+          <p style="color:var(--muted);font-size:14px;">${s.descEN}</p>
+        </button>
+      `).join("");
+    }
+
+    function row(label, value) {
+      return `<div class="kv-row"><div class="k">${label}</div><div class="v">${value}</div></div>`;
+    }
+
+    function renderEventCard(r) {
+      document.getElementById("eventCard").innerHTML =
+        row("交易追蹤碼 / WIF-PAY-ID", r.wif_pay_id) +
+        row("訂單編號 / ORDER-ID", r.order_id) +
+        row("時間戳 / TIMESTAMP", r.timestamp) +
+        row("使用者銀行 / USER-BANK", r.user_bank) +
+        row("付款平台 / PLATFORM", r.payment_platform) +
+        row("服務商 / PROVIDER", r.service_provider) +
+        row("功能類型 / FUNCTION", r.function_type) +
+        row("付款行為 / ACTION", r.payment_action) +
+        row("風險狀態 / RISK", `<span class="status-badge ${r.risk_state}">${r.risk_state}</span>`) +
+        row("審計錨記 / AUDIT-ANCHOR", r.audit_anchor);
+    }
+
+    function scoreCard(title, num, state) {
+      const pct = Math.max(0, Math.min(100, Math.round(num * 100)));
+      return `
+        <div class="score-card">
+          <div class="k">${title}</div>
+          <div class="score-num">${num}</div>
+          <span class="status-badge ${state}">${state}</span>
+          <div class="bar"><span style="width:${pct}%"></span></div>
+        </div>
+      `;
+    }
+
+    function renderScores(r) {
+      document.getElementById("scorePanel").innerHTML =
+        scoreCard("WIF Score", r.scores.wif_score, r.states.wif_state) +
+        scoreCard("SCBKR Score", r.scores.scbkr_score, r.states.responsibility_state) +
+        scoreCard("Risk Score", r.scores.risk_score, r.risk_state);
+    }
+
+    function nodeBlock(icon, name, state) {
+      return `
+        <div class="responsibility-node">
+          <div class="node-icon">${icon}</div>
+          <div class="node-name">${name}</div>
+          <span class="node-state ${state}">${state}</span>
+        </div>
+      `;
+    }
+
+    function renderNodes(r) {
+      document.getElementById("nodeMap").innerHTML =
+        nodeBlock("🏦", "BANK", r.liability_nodes.bank) +
+        nodeBlock("🧩", "PLATFORM", r.liability_nodes.platform) +
+        nodeBlock("🏢", "PROVIDER", r.liability_nodes.provider) +
+        nodeBlock("🎧", "SUPPORT", r.liability_nodes.support);
+    }
+
+    function shortHash(h) {
+      return h.length > 18 ? h.slice(0, 10) + "..." + h.slice(-8) : h;
+    }
+
+    function renderTimeline(r) {
+      document.getElementById("hashTimeline").innerHTML = r.hash_chain.steps.map(item => `
+        <div class="hash-step">
+          <div class="h-label">${item.label}</div>
+          <div>
+            <strong>${item.step}</strong>
+            <div class="hash-short">${shortHash(item.hash)}</div>
+          </div>
+          <button class="btn btn-soft" type="button" onclick="copyText('${item.hash}')">Copy</button>
+        </div>
+      `).join("") + `
+        <div class="hash-step">
+          <div class="h-label">M</div>
+          <div>
+            <strong>MASTER HASH</strong>
+            <div class="hash-short">${shortHash(r.hash_chain.master_hash)}</div>
+          </div>
+          <button class="btn btn-soft" type="button" onclick="copyText('${r.hash_chain.master_hash}')">Copy</button>
+        </div>
+      `;
+    }
+
+    function renderReport(r) {
+      document.getElementById("replayReport").textContent =
+        r.replay_summary_zh + "\n\n" + r.replay_summary_en + "\n\n" +
+        "黑盾判詞：付款不是單點事件。交易一旦出事，銀行、平台、服務商、客服都必須留下可回放責任鏈。沒有 WIF-Pay，大家都能裝死；有 WIF-Pay，責任鏈會自己說話。";
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        alert("Copied.");
+      } catch {
+        alert(text);
+      }
+    }
+
+    document.getElementById("copyJsonBtn").addEventListener("click", () => {
+      if (currentResult) copyText(JSON.stringify(currentResult, null, 2));
+    });
+
+    renderScenarios();
+    runScenario("gift");
+  </script>
+</body>
+</html>
